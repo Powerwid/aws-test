@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inicio | Sistema de Reservas de Transporte</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="header-inner">
+      <div class="brand"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 6h8M8 19v3m8-3v3M8 15h1m6 0h1"/></svg></span>Sistema de Reservas de Transporte</div>
+      <nav aria-label="Menú principal">
+        <a href="/" aria-current="page">Inicio</a><a href="/clientes.html">Clientes</a><a href="/rutas.html">Rutas</a><a href="/reservas.html">Reservas</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <p class="eyebrow">Gestión de transporte</p>
+    <section class="card hero">
+      <h1>Organiza cada viaje en un solo lugar.</h1>
+      <p>Registra a tus clientes, define las rutas y confirma sus reservas. Un sistema sencillo para llevar el control de tus viajes.</p>
+      <a class="button" href="/reservas.html">Crear una reserva →</a>
+    </section>
+    <div class="cards">
+      <section class="card"><span class="step">01</span><h2>Clientes</h2><p>Guarda los datos de contacto de tus pasajeros y consulta el listado de clientes.</p><a href="/clientes.html">Gestionar clientes →</a></section>
+      <section class="card"><span class="step">02</span><h2>Rutas</h2><p>Define el origen, el destino, la fecha de salida y el precio de cada pasaje.</p><a href="/rutas.html">Gestionar rutas →</a></section>
+      <section class="card"><span class="step">03</span><h2>Reservas</h2><p>Relaciona un cliente con una ruta. El total se calcula según la cantidad de pasajes.</p><a href="/reservas.html">Gestionar reservas →</a></section>
+    </div>
+    <p class="architecture">Práctica AWS: aplicación en EC2 · datos en MySQL / RDS · documentos en S3 como ampliación futura.</p>
+  </main>
+  <footer>Sistema de Reservas de Transporte · Proyecto de práctica</footer>
+</body>
+</html>

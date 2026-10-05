@@ -1,0 +1,35 @@
+-- Ejecutar sobre la base de datos `aws-test` ya creada.
+CREATE TABLE IF NOT EXISTS clientes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  apellido VARCHAR(100) NOT NULL,
+  dni CHAR(8) NOT NULL UNIQUE,
+  telefono VARCHAR(20) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS rutas (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  origen VARCHAR(100) NOT NULL,
+  destino VARCHAR(100) NOT NULL,
+  fecha_salida DATE NOT NULL,
+  hora_salida TIME NOT NULL,
+  precio DECIMAL(8,2) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT chk_rutas_precio CHECK (precio > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS reservas (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  cliente_id INT UNSIGNED NOT NULL,
+  ruta_id INT UNSIGNED NOT NULL,
+  cantidad_pasajes INT UNSIGNED NOT NULL,
+  total DECIMAL(10,2) NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADA',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_reservas_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+  CONSTRAINT fk_reservas_ruta FOREIGN KEY (ruta_id) REFERENCES rutas(id),
+  CONSTRAINT chk_reservas_cantidad CHECK (cantidad_pasajes BETWEEN 1 AND 100),
+  CONSTRAINT chk_reservas_total CHECK (total > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

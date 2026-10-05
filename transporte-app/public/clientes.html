@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clientes | Sistema de Reservas de Transporte</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/common.js" defer></script>
+  <script src="/js/clientes.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="header-inner">
+    <div class="brand"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 6h8M8 19v3m8-3v3M8 15h1m6 0h1"/></svg></span>Sistema de Reservas de Transporte</div>
+    <nav aria-label="Menú principal"><a href="/">Inicio</a><a href="/clientes.html" aria-current="page">Clientes</a><a href="/rutas.html">Rutas</a><a href="/reservas.html">Reservas</a></nav>
+  </div></header>
+  <main>
+    <p class="eyebrow">Pasajeros</p><h1>Clientes</h1><p class="intro">Registra los datos de tus clientes para asociarlos a sus próximas reservas.</p>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+    <div class="grid">
+      <section class="card"><h2>Registrar cliente</h2>
+        <form id="cliente-form">
+          <label>Nombre<input name="nombre" required maxlength="100" autocomplete="given-name" placeholder="Ej. Ana"></label>
+          <label>Apellido<input name="apellido" required maxlength="100" autocomplete="family-name" placeholder="Ej. Torres"></label>
+          <label>DNI<input name="dni" required pattern="[0-9]{8}" minlength="8" maxlength="8" inputmode="numeric" title="8 dígitos" placeholder="12345678"></label>
+          <label>Teléfono<input name="telefono" type="tel" required minlength="6" maxlength="20" pattern="[+0-9][0-9\s\(\)\-]{5,19}" autocomplete="tel" placeholder="987654321"></label>
+          <label>Correo electrónico<input name="email" type="email" required maxlength="150" autocomplete="email" placeholder="ana@ejemplo.com"></label>
+          <button type="submit">Registrar cliente</button>
+        </form>
+      </section>
+      <section class="card"><div class="list-heading"><h2>Clientes registrados</h2><span id="count" class="count">Cargando…</span></div>
+        <div class="table-wrap"><table><thead><tr><th scope="col">ID</th><th scope="col">Cliente</th><th scope="col">DNI</th><th scope="col">Teléfono</th><th scope="col">Email</th></tr></thead><tbody id="clientes-body"><tr><td colspan="5" class="empty">Cargando clientes…</td></tr></tbody></table></div>
+      </section>
+    </div>
+  </main>
+  <footer>Sistema de Reservas de Transporte · Proyecto de práctica</footer>
+</body>
+</html>

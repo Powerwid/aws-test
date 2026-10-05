@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rutas | Sistema de Reservas de Transporte</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/common.js" defer></script>
+  <script src="/js/rutas.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="header-inner">
+    <div class="brand"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 6h8M8 19v3m8-3v3M8 15h1m6 0h1"/></svg></span>Sistema de Reservas de Transporte</div>
+    <nav aria-label="Menú principal"><a href="/">Inicio</a><a href="/clientes.html">Clientes</a><a href="/rutas.html" aria-current="page">Rutas</a><a href="/reservas.html">Reservas</a></nav>
+  </div></header>
+  <main>
+    <p class="eyebrow">Viajes</p><h1>Rutas</h1><p class="intro">Define las salidas disponibles y el precio por pasaje en soles.</p>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+    <div class="grid">
+      <section class="card"><h2>Registrar ruta</h2>
+        <form id="ruta-form">
+          <label>Origen<input name="origen" required maxlength="100" placeholder="Ej. Lima"></label>
+          <label>Destino<input name="destino" required maxlength="100" placeholder="Ej. Arequipa"></label>
+          <label>Fecha de salida<input name="fecha_salida" type="date" required min="1000-01-01" max="9999-12-31"></label>
+          <label>Hora de salida<input name="hora_salida" type="time" required step="60"></label>
+          <label>Precio por pasaje (S/)<input name="precio" type="number" required min="0.01" max="999999.99" step="0.01" placeholder="80.00"></label>
+          <button type="submit">Registrar ruta</button>
+        </form>
+      </section>
+      <section class="card"><div class="list-heading"><h2>Rutas registradas</h2><span id="count" class="count">Cargando…</span></div>
+        <div class="table-wrap"><table><thead><tr><th scope="col">ID</th><th scope="col">Origen</th><th scope="col">Destino</th><th scope="col">Fecha</th><th scope="col">Hora</th><th scope="col">Precio</th></tr></thead><tbody id="rutas-body"><tr><td colspan="6" class="empty">Cargando rutas…</td></tr></tbody></table></div>
+      </section>
+    </div>
+  </main>
+  <footer>Sistema de Reservas de Transporte · Proyecto de práctica</footer>
+</body>
+</html>
