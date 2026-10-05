@@ -34,7 +34,8 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await db.query('SELECT 1');
-  const server = app.listen(port, '0.0.0.0', () => {
+  const server = app.listen(port, '0.0.0.0');
+  server.once('listening', () => {
     console.log(`Sistema de Reservas de Transporte disponible en http://0.0.0.0:${port}`);
   });
   server.on('error', async err => {
