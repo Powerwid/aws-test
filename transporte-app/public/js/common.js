@@ -29,7 +29,9 @@ function renderRows(body, rows, columns) {
     const row = document.createElement('tr');
     for (const column of columns) {
       const cell = document.createElement('td');
-      cell.textContent = column(record);
+      const value = column(record);
+      if (value instanceof Node) cell.append(value);
+      else cell.textContent = value;
       row.append(cell);
     }
     body.append(row);

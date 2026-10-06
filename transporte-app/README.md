@@ -1,10 +1,10 @@
 # Sistema de Reservas de Transporte
 
-Aplicación pequeña con Node.js, Express 5, mysql2, dotenv y HTML/CSS/JavaScript vanilla. Permite registrar y listar clientes, rutas y reservas. Cada reserva relaciona un cliente con una ruta y se crea con estado `CONFIRMADA`.
+Aplicación pequeña con Node.js, Express 5, mysql2, dotenv y HTML/CSS/JavaScript vanilla. Permite registrar y listar clientes, rutas y reservas, y adjuntar documentos privados en S3. Cada reserva relaciona un cliente con una ruta y se crea con estado `CONFIRMADA`.
 
 ```text
 Navegador → EC2 (nginx :80 → Express :3000) → MySQL / Amazon RDS
-                             └─ Amazon S3: ampliación futura para documentos
+                             └─ Amazon S3: documentos privados de reservas
 ```
 
 El total se calcula en MySQL: `cantidad_pasajes * precio`. Los importes usan `DECIMAL`, las consultas reciben parámetros y el navegador no determina el total guardado. Precios en soles; DNI de 8 dígitos; reservas de 1 a 100 pasajes.
@@ -26,13 +26,20 @@ transporte-app/
 │       ├── rutas.js
 │       └── reservas.js
 ├── src/
-│   ├── config/database.js
+│   ├── config/
+│   │   ├── database.js
+│   │   └── s3.js
 │   ├── routes/
 │   │   ├── clientes.js
 │   │   ├── rutas.js
-│   │   └── reservas.js
+│   │   ├── reservas.js
+│   │   └── documentos.js
 │   └── server.js
 ├── schema.sql
+├── migrations/001_documento_reserva.sql
+├── test/
+│   ├── documentos.test.js
+│   └── s3.test.js
 ├── .env.example
 ├── .gitignore
 ├── package.json
@@ -78,6 +85,8 @@ DB_USER=root
 DB_PASSWORD=TU_CONTRASENA_MYSQL
 DB_NAME=aws-test
 PORT=3000
+AWS_REGION=us-east-1
+S3_BUCKET=transporte-documentos-joseph-2026
 ```
 
 En esta copia de trabajo ya existe un `.env` con la contraseña local indicada para la práctica. No lo sobrescribas si quieres conservarla. `.env` está excluido de Git; `.env.example` contiene una contraseña de ejemplo. `DB_PASSWORD` es la contraseña del usuario MySQL indicado en `DB_USER`.
@@ -122,6 +131,8 @@ mysql -h 127.0.0.1 -P 3306 -u root -p aws-test -e "SHOW TABLES;"
 
 `schema.sql` crea las tablas `clientes`, `rutas` y `reservas`, sus claves foráneas y restricciones. Puede ejecutarse de nuevo sin borrar registros; no modifica tablas preexistentes.
 
+Para una instalación anterior que ya tiene la tabla `reservas`, usa la migración de documentos de la sección 9 en lugar de volver a ejecutar `schema.sql`. Las reservas sin documento siguen funcionando; la nueva columna es nullable.
+
 ## 5. Ejecutar localmente
 
 ```bash
@@ -157,6 +168,7 @@ Prueba los formularios en este orden:
 3. **Reservas:** selecciona ese cliente y esa ruta, e ingresa `2` pasajes. Debe guardarse un total de `S/ 161.00` y estado `CONFIRMADA`.
 4. Recarga la página para comprobar que los registros siguen guardados.
 5. Intenta repetir el DNI: debe aparecer un error y conservar los datos del formulario.
+6. En **Reservas → Adjuntar documento**, selecciona una reserva y un PDF, JPG, JPEG o PNG de hasta 5 MB. Después de subirlo aparece **Ver documento** en la tabla. La carga requiere acceso AWS; en EC2 se utiliza el IAM Role asociado.
 
 ## 6. Ejecutar en EC2 con Amazon Linux 2023
 
@@ -282,6 +294,8 @@ DB_USER=USUARIO_RDS
 DB_PASSWORD=CONTRASENA_RDS
 DB_NAME=aws-test
 PORT=3000
+AWS_REGION=us-east-1
+S3_BUCKET=transporte-documentos-joseph-2026
 ```
 
 `DB_HOST` lleva solamente el hostname del endpoint, sin `https://` y sin `:3306`. Si mantienes el mismo usuario y contraseña basta con cambiar el host; de lo contrario actualiza también las credenciales.
@@ -325,6 +339,7 @@ http {
     server {
         listen 80 default_server;
         server_name _;
+        client_max_body_size 6m;
 
         location / {
             proxy_pass http://127.0.0.1:3000;
@@ -346,6 +361,8 @@ Permite HTTP `80` desde tu IP en el grupo de seguridad de EC2 y retira la regla 
 
 La directiva está documentada en [nginx: proxy_pass](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass).
 
+`client_max_body_size 6m` deja espacio para un archivo de 5 MB y la cabecera multipart. La aplicación sigue limitando el archivo a 5 MB. Si ya tienes nginx configurado, agrega esa línea al bloque `server` de la aplicación, ejecuta `sudo nginx -t` y después `sudo systemctl reload nginx`.
+
 ## API
 
 | Método | Endpoint | Resultado |
@@ -357,12 +374,86 @@ La directiva está documentada en [nginx: proxy_pass](https://nginx.org/en/docs/
 | POST | `/api/rutas` | Registra origen, destino, fecha_salida, hora_salida, precio |
 | GET | `/api/reservas` | Array de reservas con datos del cliente y ruta |
 | POST | `/api/reservas` | Recibe cliente_id, ruta_id, cantidad_pasajes |
+| POST | `/api/reservas/:id/documento` | Multipart con un archivo en el campo documento |
+| GET | `/api/reservas/:id/documento` | Redirige a una URL privada prefirmada de 5 minutos |
 
 Los POST usan JSON y responden `201` al crear un registro. Los errores incluyen `message`: `400` para datos inválidos, `404` para cliente/ruta inexistente, `409` para DNI repetido y `500` para fallos inesperados de base de datos. Las fechas se envían como `YYYY-MM-DD` y las horas como `HH:MM`. Los campos `DECIMAL` se devuelven como cadenas para preservar precisión.
 
-## Ampliación posterior con Amazon S3
+## 9. Documentos privados en S3 y actualización de la EC2 existente
 
-La versión actual guarda clientes, rutas y reservas en MySQL. Para agregar documentos más adelante, se puede incorporar un endpoint de carga, un bucket privado de S3 y un rol IAM de EC2 con permisos para ese bucket. El backend guardaría el archivo en S3 y su clave de objeto junto a la reserva en MySQL; un enlace temporal permitiría descargarlo. Esa ampliación no está implementada en esta versión y no requiere guardar archivos en el disco de EC2.
+Paquetes agregados: `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` y `multer`. Multer recibe un archivo en memoria, sin escribirlo en el disco de EC2, y el SDK lo envía al bucket privado. Se validan extensión, MIME y firma inicial del archivo; solo se aceptan PDF, JPG, JPEG y PNG de hasta `5 * 1024 * 1024` bytes.
+
+Agrega estas dos líneas al `.env` existente de EC2, conservando la configuración de RDS:
+
+```dotenv
+AWS_REGION=us-east-1
+S3_BUCKET=transporte-documentos-joseph-2026
+```
+
+No agregues Access Key, Secret Key ni Session Token al archivo. `S3Client` utiliza la cadena de credenciales predeterminada del SDK y obtiene las credenciales temporales del IAM Role de EC2. El rol debe permitir `s3:PutObject` y `s3:GetObject` sobre `arn:aws:s3:::transporte-documentos-joseph-2026/documentos/reservas/*`. `HeadObject`, usado para verificar que el documento existe, requiere el mismo permiso `s3:GetObject`. Mantén el bucket privado; no se envían ACL públicas. Véase [proveedores de credenciales de AWS SDK v3](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/migrate-credential-providers.html).
+
+La key tiene este formato:
+
+```text
+documentos/reservas/5/1760000000000-comprobante.pdf
+```
+
+En MySQL solo se guarda esa key en `reservas.documento_s3_key`; no se guardan archivos ni URLs prefirmadas. **Ver documento** solicita un enlace nuevo que caduca en cinco minutos y abre el PDF o imagen en otra pestaña. Desde el visor del navegador también puedes descargarlo. Los registros sin documento muestran un guion en esa columna.
+
+Primero registra una reserva y después adjúntale el documento desde el segundo formulario. Si una carga falla, la reserva permanece y puedes reintentar sin crear otra. Una nueva carga para la misma reserva actualiza la key asociada; el objeto anterior permanece privado en S3. No se necesita permiso `s3:DeleteObject`.
+
+Para RDS existente, ejecuta **una sola vez**:
+
+```sql
+ALTER TABLE reservas
+  ADD COLUMN documento_s3_key VARCHAR(500) NULL AFTER estado;
+```
+
+La misma sentencia está en `migrations/001_documento_reserva.sql`. No elimina datos. Si la columna ya existe porque usaste el `schema.sql` nuevo, no ejecutes esta migración. Puedes comprobarlo con `SHOW COLUMNS FROM reservas LIKE 'documento_s3_key';`.
+
+Actualiza EC2 desde la carpeta del proyecto clonado. El siguiente ejemplo supone que el repositorio está en `/home/ec2-user/aws-test`; ajusta esa ruta si usaste otra:
+
+```bash
+cd /home/ec2-user/aws-test/transporte-app
+git pull --ff-only origin main
+npm ci --omit=dev
+nano .env
+```
+
+Agrega las dos variables S3 indicadas. Sustituye `ENDPOINT_RDS` y `USUARIO_RDS` por los valores de `DB_HOST` y `DB_USER` de tu `.env`, y ejecuta la migración antes de reiniciar:
+
+```bash
+mysql --default-character-set=utf8mb4 -h ENDPOINT_RDS -P 3306 -u USUARIO_RDS -p aws-test < migrations/001_documento_reserva.sql
+```
+
+Configura el límite de nginx y reinicia el proceso. Estos comandos suponen que usas el servicio `transporte-app` descrito en la sección 6:
+
+```bash
+sudo nano /etc/nginx/nginx.conf
+sudo nginx -t
+sudo systemctl reload nginx
+sudo systemctl restart transporte-app
+sudo systemctl status transporte-app --no-pager
+curl http://127.0.0.1:3000/health
+```
+
+Dentro del bloque `server` de nginx agrega `client_max_body_size 6m;`. Si usas el servicio de la sección 6 pero ahora clonaste el proyecto en otra ruta, actualiza `WorkingDirectory` y `ExecStart` para apuntar al directorio actual y ejecuta `sudo systemctl daemon-reload` antes de reiniciar. Si ejecutas manualmente con `npm start`, detén el proceso anterior con `Ctrl+C` y vuelve a iniciarlo desde el directorio actualizado.
+
+Comprueba una carga real desde la web y después revisa RDS:
+
+```sql
+SELECT id, documento_s3_key FROM reservas ORDER BY id DESC;
+```
+
+La aplicación responde `413` cuando el archivo supera 5 MB, `400` para formato/contenido incorrecto, `404` si no existe la reserva o el documento, `502` para fallos de S3 y `500` para fallos de MySQL. Si S3 recibe un archivo y luego falla el UPDATE de MySQL, se informa que el archivo quedó en S3 sin asociar; el mensaje de consola incluye la key para localizarlo. El enlace anterior de la reserva no se modifica si el UPDATE falla.
+
+Para ejecutar las pruebas locales de documentos:
+
+```bash
+npm test
+```
+
+Estas pruebas simulan MySQL y el transporte/firma de S3 para comprobar los formatos, el límite de 5 MB, la asociación de la key, los comandos del SDK, la caducidad, la redirección y los errores. No usan credenciales AWS ni suben archivos reales. La carga y la apertura reales con el IAM Role se verifican desde la EC2 desplegada.
 
 ## Problemas frecuentes
 
@@ -372,9 +463,11 @@ La versión actual guarda clientes, rutas y reservas en MySQL. Para agregar docu
 - **ETIMEDOUT al conectar RDS:** revisa VPC, grupos de seguridad y conectividad a `3306`.
 - **EADDRINUSE:** otro proceso ya está usando `3000`; detén la ejecución manual antes de iniciar el servicio.
 - **nginx devuelve 502:** comprueba `systemctl status transporte-app` y `curl http://127.0.0.1:3000/health`.
+- **nginx devuelve 413 al subir:** agrega `client_max_body_size 6m;` al bloque `server` y recarga nginx; el archivo debe seguir siendo de hasta 5 MB.
+- **S3 devuelve AccessDenied o faltan credenciales:** comprueba el IAM Role de EC2 y sus permisos para el prefijo `documentos/reservas/*`; no agregues claves AWS al `.env`.
 
 Solo `npm run dev` usa nodemon. EC2 instala las dependencias de producción con `npm ci --omit=dev`.
 
 En la verificación de esta entrega, `npm audit --omit=dev` no reportó vulnerabilidades. `npm audit` sí reportó tres alertas de severidad alta en la cadena de desarrollo nodemon/chokidar/braces; no había una versión corregida de braces disponible. Estas dependencias no se instalan con `--omit=dev`.
 
-Se verificaron el arranque con MySQL 8.0, las consultas y claves foráneas, todos los endpoints y los tres formularios en un navegador. También se comprobaron el total calculado, los errores de validación, la persistencia al recargar y la adaptación a móvil. Los datos creados para estas pruebas se eliminaron al terminar. El despliegue real en EC2/RDS/nginx queda para la práctica; no se ejecutó desde este entorno local.
+Se verificaron el arranque con MySQL 8.0, las consultas y claves foráneas y los formularios de clientes, rutas, reservas y documentos en un navegador. También se comprobaron el total calculado, los errores de validación, la persistencia al recargar, la migración sin perder reservas y la adaptación a móvil. Los datos creados para estas pruebas se eliminaron al terminar. Las pruebas de documentos usaron S3 simulado; la actualización y la carga real con el IAM Role de EC2 deben verificarse en el entorno AWS siguiendo la sección 9.

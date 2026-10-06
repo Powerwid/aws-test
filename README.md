@@ -1,6 +1,6 @@
 # aws-test
 
-Aplicación sencilla de gestión de transporte para una práctica de arquitectura AWS: Node.js/Express en EC2, MySQL como base de datos y migración posterior a Amazon RDS. Amazon S3 se describe como ampliación futura para documentos.
+Aplicación sencilla de gestión de transporte para una práctica de arquitectura AWS: Node.js/Express en EC2, MySQL / Amazon RDS como base de datos y documentos privados de reservas en Amazon S3 mediante el IAM Role de EC2.
 
 El proyecto completo se encuentra en **[transporte-app](transporte-app/README.md)**, con instrucciones de configuración local, Amazon Linux 2023, RDS y nginx.
 

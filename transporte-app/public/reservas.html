@@ -27,9 +27,19 @@
           <p class="hint">El total se confirma al registrar la reserva. Todas las reservas se crean con estado CONFIRMADA.</p>
           <button type="submit" disabled>Confirmar reserva</button>
         </form>
+        <div class="form-section">
+          <h2>Adjuntar documento</h2>
+          <p class="hint">Primero registra la reserva y luego adjunta su documento o comprobante.</p>
+          <form id="documento-form" enctype="multipart/form-data">
+            <label>Reserva<select name="reserva_id" required><option value="">Selecciona una reserva</option></select></label>
+            <label>Documento / comprobante<input name="documento" type="file" accept=".pdf,.jpg,.jpeg,.png" required aria-describedby="documento-hint"></label>
+            <p id="documento-hint" class="hint">PDF, JPG, JPEG o PNG. Máximo 5 MB. Una nueva carga reemplaza el documento asociado.</p>
+            <button type="submit" disabled>Subir documento</button>
+          </form>
+        </div>
       </section>
       <section class="card"><div class="list-heading"><h2>Reservas registradas</h2><span id="count" class="count">Cargando…</span></div>
-        <div class="table-wrap"><table><thead><tr><th scope="col">ID</th><th scope="col">Cliente</th><th scope="col">Ruta</th><th scope="col">Salida</th><th scope="col">Pasajes</th><th scope="col">Total</th><th scope="col">Estado</th></tr></thead><tbody id="reservas-body"><tr><td colspan="7" class="empty">Cargando reservas…</td></tr></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th scope="col">ID</th><th scope="col">Cliente</th><th scope="col">Ruta</th><th scope="col">Salida</th><th scope="col">Pasajes</th><th scope="col">Total</th><th scope="col">Estado</th><th scope="col">Documento</th></tr></thead><tbody id="reservas-body"><tr><td colspan="8" class="empty">Cargando reservas…</td></tr></tbody></table></div>
       </section>
     </div>
   </main>

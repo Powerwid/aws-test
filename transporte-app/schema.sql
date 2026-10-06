@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS reservas (
   cantidad_pasajes INT UNSIGNED NOT NULL,
   total DECIMAL(10,2) NOT NULL,
   estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADA',
+  documento_s3_key VARCHAR(500) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_reservas_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id),
   CONSTRAINT fk_reservas_ruta FOREIGN KEY (ruta_id) REFERENCES rutas(id),

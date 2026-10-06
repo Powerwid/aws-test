@@ -11,6 +11,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/clientes', require('./routes/clientes'));
 app.use('/api/rutas', require('./routes/rutas'));
 app.use('/api/reservas', require('./routes/reservas'));
+app.use('/api/reservas', require('./routes/documentos'));
 app.use(express.static(path.join(__dirname, '../public')));
 app.use((req, res) => res.status(404).json({ message: 'Recurso no encontrado.' }));
 
